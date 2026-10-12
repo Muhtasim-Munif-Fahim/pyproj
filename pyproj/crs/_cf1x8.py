@@ -6,6 +6,7 @@ http://cfconventions.org/cf-conventions/cf-conventions.html#appendix-grid-mappin
 
 """
 
+import math
 import warnings
 
 from pyproj._crs import Datum, Ellipsoid, PrimeMeridian
@@ -366,10 +367,30 @@ _GEOGRAPHIC_GRID_MAPPING_NAME_MAP = {
 }
 
 
+def _angle_to_degrees(value, unit_conversion_factor):
+    """
+    Convert an angle to degrees, which CF uses for all angular attributes.
+
+    Parameters
+    ----------
+    value: float
+        The angle in its own unit.
+    unit_conversion_factor: float
+        The number of radians in one unit of the angle.
+    """
+    unit_conversion_factor = float(unit_conversion_factor)
+    if math.isclose(unit_conversion_factor, math.radians(1), rel_tol=1e-12):
+        return value
+    return math.degrees(value * unit_conversion_factor)
+
+
 def _to_dict(operation):
     param_dict = {}
     for param in operation.params:
-        param_dict[param.name.lower().replace(" ", "_")] = param.value
+        value = param.value
+        if param.unit_category == "angular":
+            value = _angle_to_degrees(value, param.unit_conversion_factor)
+        param_dict[param.name.lower().replace(" ", "_")] = value
     return param_dict
 
 

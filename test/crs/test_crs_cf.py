@@ -577,6 +577,29 @@ def test_cf_lambert_conformal_conic_1sp():
     }
 
 
+def test_to_cf__angles_in_grad():
+    # EPSG:27572 (NTF (Paris) / Lambert zone II) has its prime meridian and
+    # projection parameters in grad, CF expects degrees
+    crs = CRS("EPSG:27572")
+    cf_dict = crs.to_cf()
+    assert cf_dict["grid_mapping_name"] == "lambert_conformal_conic"
+    assert cf_dict["longitude_of_prime_meridian"] == pytest.approx(2.33722917)
+    assert cf_dict["standard_parallel"] == pytest.approx(46.8)
+    assert cf_dict["longitude_of_central_meridian"] == 0
+    cf_dict.pop("crs_wkt")
+    crs_from_cf = CRS.from_cf(cf_dict)
+    assert crs_from_cf.prime_meridian.name == "Paris"
+    params = {param.name: param for param in crs_from_cf.coordinate_operation.params}
+    assert params["Latitude of natural origin"].unit_name == "degree"
+    assert params["Latitude of natural origin"].value == pytest.approx(46.8)
+
+
+def test_to_cf__prime_meridian_in_grad():
+    cf_dict = CRS("+proj=longlat +pm=paris +ellps=clrk80ign").to_cf()
+    assert cf_dict["longitude_of_prime_meridian"] == pytest.approx(2.33722917)
+    assert cf_dict["prime_meridian_name"] == "Paris"
+
+
 @pytest.mark.parametrize("standard_parallel", [[25.0, 30.0], "25., 30."])
 def test_cf_lambert_conformal_conic_2sp(standard_parallel):
     crs = CRS.from_cf(

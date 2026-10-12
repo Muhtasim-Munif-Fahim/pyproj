@@ -30,6 +30,7 @@ from pyproj.crs._cf1x8 import (
     _GRID_MAPPING_NAME_MAP,
     _INVERSE_GEOGRAPHIC_GRID_MAPPING_NAME_MAP,
     _INVERSE_GRID_MAPPING_NAME_MAP,
+    _angle_to_degrees,
     _horizontal_datum_from_params,
     _try_list_if_string,
 )
@@ -689,7 +690,10 @@ class CRS:
             )
             cf_dict["reference_ellipsoid_name"] = self.ellipsoid.name
         if self.prime_meridian:
-            cf_dict["longitude_of_prime_meridian"] = self.prime_meridian.longitude
+            cf_dict["longitude_of_prime_meridian"] = _angle_to_degrees(
+                self.prime_meridian.longitude,
+                self.prime_meridian.unit_conversion_factor,
+            )
             cf_dict["prime_meridian_name"] = self.prime_meridian.name
 
         # handle geographic CRS
